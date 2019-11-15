@@ -11,7 +11,7 @@ class Sausage(left:Int,top:Int,right:Int,bottom:Int): Food(left, top, right, bot
         super.right = right
         super.bottom = bottom
         super.rect = Rect(left,top,right,bottom)
-        super.jenis = "bun"
+        super.jenis = "sausage"
         super.poin = 3
     }
 

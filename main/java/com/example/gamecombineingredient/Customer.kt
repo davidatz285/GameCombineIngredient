@@ -31,7 +31,7 @@ class Customer(left: Int, top: Int, right: Int, bottom: Int) {
             } else {
                 poin = -3
             }
-        } else {
+        } else{
             if (food.jenis == "hotdog") {
                 poin = 5
             } else {

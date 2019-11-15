@@ -20,8 +20,6 @@ open class Food(left: Int, top: Int, right: Int, bottom: Int) {
         this.rect = Rect(left, top, right, bottom)
     }
 
-    fun resetRect() {
-        this.rect = Rect(left, top, right, bottom)
-    }
+
 
 }

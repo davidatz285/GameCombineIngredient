@@ -5,7 +5,6 @@ import android.graphics.Canvas
 import android.graphics.Rect
 import android.media.Image
 import androidx.appcompat.app.AppCompatActivity
-
 import android.os.Bundle
 import android.view.MotionEvent
 import android.view.View
