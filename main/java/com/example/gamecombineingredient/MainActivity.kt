@@ -8,13 +8,10 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.MotionEvent
 import android.view.View
-import android.widget.Button
-import android.widget.ImageView
-import android.widget.RelativeLayout
-import android.widget.TextView
+import android.widget.*
 
 class MainActivity : AppCompatActivity() {
-    lateinit var playButton : Button
+    lateinit var playButton : ImageButton
 
 
     override fun onCreate(savedInstanceState: Bundle?) {

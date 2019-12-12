@@ -1,22 +1,30 @@
 package com.example.gamecombineingredient
 
+import android.animation.ObjectAnimator
 import android.app.AlertDialog
 import android.content.Context
 import android.content.DialogInterface
 import android.content.Intent
 import android.graphics.*
+
 import android.util.Log
 import android.view.MotionEvent
 import android.view.View
 import android.widget.Button
 import android.widget.ImageView
 import android.widget.LinearLayout
+import com.github.nisrulz.sensey.Sensey
+import com.github.nisrulz.sensey.ShakeDetector
 import java.util.*
+import com.github.nisrulz.sensey.ShakeDetector.ShakeListener
 
-class GameView(context: Context) : LinearLayout(context), InterfaceGameActivity, View.OnClickListener, View.OnTouchListener {
+class GameView(context: Context) : LinearLayout(context), InterfaceGameActivity, View.OnClickListener, View.OnTouchListener,ShakeListener  {
+
     var active: Food
     var bmMeat: Bitmap
+    var bmMeatRaw : Bitmap
     var bmSausage: Bitmap
+    var bmSausageRaw : Bitmap
     var bmBun: Bitmap
     var bmBurger: Bitmap
     var bmHotdog: Bitmap
@@ -33,12 +41,13 @@ class GameView(context: Context) : LinearLayout(context), InterfaceGameActivity,
     var linearLayout: LinearLayout
     var random: Random
     var score = 0
+    //var shakeListener : ShakeListener
 
     init {
         View.inflate(context, R.layout.activity_game, this)
         this.presenter = Presenter(this)
         this.paint = Paint()
-        paint.textSize = 100f
+        paint.textSize = 120f
         paint.isAntiAlias = true
         this.random = Random()
         this.active = Food(0, 0, 0, 0)
@@ -54,18 +63,20 @@ class GameView(context: Context) : LinearLayout(context), InterfaceGameActivity,
         this.presenter.positionSausage.add(Position(imageView.width / 5 + 100, imageView.height / 3 + 600, imageView.width / 5 + 300, imageView.height / 3 + 800))
         this.presenter.positionSausage.add(Position(imageView.width / 5 + 100, imageView.height / 3 + 900, imageView.width / 5 + 300, imageView.height / 3 + 1100))
         this.presenter.positionSausage.add(Position(imageView.width / 5 + 100, imageView.height / 3 + 1200, 2 * imageView.width / 5 + 300, imageView.height / 3 + 1400))
-        this.presenter.positionBun.add(Position(imageView.width / 5 + 400, imageView.height / 3 + 600, imageView.width / 5 + 600, imageView.height / 3 + 800))
-        this.presenter.positionBun.add(Position(imageView.width / 5 + 400, imageView.height / 3 + 900, imageView.width / 5 + 600, imageView.height / 3 + 1100))
-        this.presenter.positionBun.add(Position(imageView.width / 5 + 400, imageView.height / 3 + 1200, 2 * imageView.width / 5 + 600, imageView.height / 3 + 1400))
+        this.presenter.positionBun.add(Position(imageView.width / 5 + 430, imageView.height / 3 + 640, imageView.width / 5 + 630, imageView.height / 3 + 840))
+        this.presenter.positionBun.add(Position(imageView.width / 5 + 430, imageView.height / 3 + 940, imageView.width / 5 + 630, imageView.height / 3 + 1140))
+        this.presenter.positionBun.add(Position(imageView.width / 5 + 430, imageView.height / 3 + 1240, 2 * imageView.width / 5 + 630, imageView.height / 3 + 1440))
         this.presenter.positionMeat.add(Position(imageView.width / 5 + 800, imageView.height / 3 + 600, imageView.width / 5 + 1000, imageView.height / 3 + 800))
         this.presenter.positionMeat.add(Position(imageView.width / 5 + 800, imageView.height / 3 + 900, imageView.width / 5 + 1000, imageView.height / 3 + 1100))
         this.presenter.positionMeat.add(Position(imageView.width / 5 + 800, imageView.height / 3 + 1200, 2 * imageView.width / 5 + 1000, imageView.height / 3 + 1400))
-        this.presenter.positionCustomer.add(Position(imageView.width / 5 + 100, imageView.height / 3 + 200, imageView.width / 5 + 300, imageView.height / 3 + 400))
-        this.presenter.positionCustomer.add(Position(imageView.width / 5 + 400, imageView.height / 3 + 200, imageView.width / 5 + 600, imageView.height / 3 + 400))
-        this.presenter.positionCustomer.add(Position(imageView.width / 5 + 800, imageView.height / 3 + 200, imageView.width / 5 + 1000, imageView.height / 3 + 400))
+        this.presenter.positionCustomer.add(Position(imageView.width / 5 + 100, imageView.height / 3 + 180, imageView.width / 5 + 400, imageView.height / 3 + 480))
+        this.presenter.positionCustomer.add(Position(imageView.width / 5 + 400, imageView.height / 3 + 180, imageView.width / 5 + 700, imageView.height / 3 + 480))
+        this.presenter.positionCustomer.add(Position(imageView.width / 5 + 800, imageView.height / 3 + 180, imageView.width / 5 + 1100, imageView.height / 3 + 480))
         this.bmBun = BitmapFactory.decodeResource(resources, R.drawable.bun)
         this.bmMeat = BitmapFactory.decodeResource(resources, R.drawable.meat)
+        this.bmMeatRaw = BitmapFactory.decodeResource(resources, R.drawable.meat_raw)
         this.bmSausage = BitmapFactory.decodeResource(resources, R.drawable.sausage)
+        this.bmSausageRaw = BitmapFactory.decodeResource(resources, R.drawable.sausage_raw)
         this.bmBurger = BitmapFactory.decodeResource(resources, R.drawable.burger)
         this.bmHotdog = BitmapFactory.decodeResource(resources, R.drawable.hotdog)
         this.bmCusBurger = BitmapFactory.decodeResource(resources, R.drawable.customer_burger)
@@ -74,7 +85,9 @@ class GameView(context: Context) : LinearLayout(context), InterfaceGameActivity,
         for (i in 0..randomNum) {
             presenter.arrCustomer.add(Customer(this.presenter.positionCustomer.get(i).left, this.presenter.positionCustomer.get(i).top, this.presenter.positionCustomer.get(i).right, this.presenter.positionCustomer.get(i).bottom))
         }
-
+        Sensey.getInstance().init(context)
+        //this.shakeListener = ShakeListener
+        Sensey.getInstance().startShakeDetection(10.0f,2000,this)
         initiateCanvas()
         setWillNotDraw(false)
     }
@@ -108,7 +121,6 @@ class GameView(context: Context) : LinearLayout(context), InterfaceGameActivity,
                 var bun = Bun(this.presenter.positionBun.get(counterBun % 3).left, this.presenter.positionBun.get(counterBun % 3).top, this.presenter.positionBun.get(counterBun % 3).right, this.presenter.positionBun.get(counterBun % 3).bottom)
                 this.addBun(bun)
                 this.presenter.positionBunFilled[counterBun % 3] = true
-
             }
             invalidate()
         } else if (view?.id == this.btnAddMeat.id) {
@@ -152,18 +164,43 @@ class GameView(context: Context) : LinearLayout(context), InterfaceGameActivity,
                 Log.d("move : ", event?.x.toString() + " + " + event?.y.toString())
                 for (item in presenter.arrBun) {
                     if (Rect.intersects(active.rect, item.rect)) {
-                        if (!active.equals(item) && (active.jenis.equals("meat") || active.jenis.equals("bun"))) {
+                        if (!active.equals(item) && (active.jenis.equals("meat") && active.isCooked)) {
                             var burger = Burger(active as Meat, item, item.left, item.top, item.right, item.bottom)
                             this.presenter.addBurger(burger)
                             this.presenter.arrBun.remove(item)
                             this.presenter.arrMeat.remove(active as Meat)
                             score += 5
                             Log.d("intersect", "burger")
-                        } else if (!active.equals(item) && (active.jenis.equals("sausage") || active.jenis.equals("bun"))) {
+                        } else if (!active.equals(item) && (active.jenis.equals("sausage")&& active.isCooked)) {
                             var hotdog = Hotdog(active as Sausage, item, item.left, item.top, item.right, item.bottom)
                             this.presenter.addHotdog(hotdog)
                             this.presenter.arrBun.remove(item)
                             this.presenter.arrSausage.remove(active as Sausage)
+                            score += 5
+                        }
+                        break
+                    }
+                }
+                for (item in presenter.arrMeat) {
+                    if (Rect.intersects(active.rect, item.rect)) {
+                        if (!active.equals(item) && (active.jenis.equals("bun") && item.isCooked)) {
+                            var burger = Burger(item, active as Bun, item.left, item.top, item.right, item.bottom)
+                            this.presenter.addBurger(burger)
+                            this.presenter.arrBun.remove(active as Bun)
+                            this.presenter.arrMeat.remove(item)
+                            score += 5
+                            Log.d("intersect", "burger")
+                        }
+                        break
+                    }
+                }
+                for (item in presenter.arrSausage) {
+                    if (Rect.intersects(active.rect, item.rect)) {
+                        if (!active.equals(item) && (active.jenis.equals("bun")&& item.isCooked)) {
+                            var hotdog = Hotdog(item, active as Bun, item.left, item.top, item.right, item.bottom)
+                            this.presenter.addHotdog(hotdog)
+                            this.presenter.arrBun.remove(active as Bun)
+                            this.presenter.arrSausage.remove(item)
                             score += 5
                         }
                         break
@@ -211,18 +248,26 @@ class GameView(context: Context) : LinearLayout(context), InterfaceGameActivity,
 
     override fun draw(canvas: Canvas?) {
         super.draw(canvas)
-        canvas?.drawText(score.toString(), width / 2f, 100f, paint)
+        canvas?.drawText(score.toString(), (width / 2f) - 20, 100f, paint)
         for (items in presenter.arrBun) {
             canvas?.drawBitmap(bmBun, null, items.rect, null)
         }
         for (items in presenter.arrMeat) {
-            canvas?.drawBitmap(bmMeat, null, items.rect, null)
+            if(items.isCooked){
+                canvas?.drawBitmap(bmMeat, null, items.rect, null)
+            }else{
+                canvas?.drawBitmap(bmMeatRaw, null, items.rect, null)
+            }
         }
         for (items in presenter.arrBurger) {
             canvas?.drawBitmap(bmBurger, null, items.rect, null)
         }
         for (items in presenter.arrSausage) {
-            canvas?.drawBitmap(bmSausage, null, items.rect, null)
+            if(items.isCooked){
+                canvas?.drawBitmap(bmSausage, null, items.rect, null)
+            }else{
+                canvas?.drawBitmap(bmSausageRaw, null, items.rect, null)
+            }
         }
         for (items in presenter.arrHotdog) {
             canvas?.drawBitmap(bmHotdog, null, items.rect, null)
@@ -276,6 +321,31 @@ class GameView(context: Context) : LinearLayout(context), InterfaceGameActivity,
 
     override fun addHotdog(hotdog: Hotdog) {
         presenter.addHotdog(hotdog)
+    }
+
+    override fun onShakeDetected() {
+        for(item in presenter.arrMeat){
+            item.counterCook++
+//            var flip = ObjectAnimator.ofFloat(bmMeat,null,0f,180f)
+//            flip.setDuration(1000)
+//            flip.start()
+            if(item.counterCook >5){
+                item.isCooked = true
+                imageView.invalidate()
+            }
+        }
+        for(item in presenter.arrSausage){
+            item.counterCook++
+            if(item.counterCook >5){
+                item.isCooked = true
+                imageView.invalidate()
+            }
+        }
+        Log.d("shake","shake shake")
+    }
+
+    override fun onShakeStopped() {
+        imageView.invalidate()
     }
 
 

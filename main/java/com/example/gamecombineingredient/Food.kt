@@ -10,6 +10,7 @@ open class Food(left: Int, top: Int, right: Int, bottom: Int) {
     var poin: Int = 0
     var jenis: String
     var rect: Rect
+    var isCooked : Boolean
 
     init {
         this.left = left
@@ -18,6 +19,7 @@ open class Food(left: Int, top: Int, right: Int, bottom: Int) {
         this.bottom = bottom
         this.jenis = ""
         this.rect = Rect(left, top, right, bottom)
+        this.isCooked = false
     }
 
 
